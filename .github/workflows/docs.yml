@@ -1,0 +1,61 @@
+name: Docs
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: rocq-community/docker-coq-action@v1
+        with:
+          opam_file: rocq-smt-lib.opam
+          coq_version: '9.2'
+          ocaml_version: default
+          before_install: |
+            startGroup "Add the Rocq package archive"
+              opam repo add --all --set-default coq-released https://coq.inria.fr/opam/released || true
+            endGroup
+          before_script: |
+            startGroup "Let the container user write to the workspace"
+              sudo chown -R 1000:1000 .
+            endGroup
+          script: |
+            startGroup "Build CoqDoc"
+              dune build theories/SMTLIB.html
+            endGroup
+          after_script: |
+            startGroup "Assemble site"
+              mkdir -p site
+              cp -R _build/default/theories/SMTLIB.html site/SMTLIB
+              chmod -R u+w site
+              printf '<!DOCTYPE html>\n<meta charset="utf-8">\n<meta http-equiv="refresh" content="0; url=SMTLIB/toc.html">\n<title>Rocq mechanisation of SMT-LIB</title>\n<a href="SMTLIB/toc.html">Table of contents</a>\n' > site/index.html
+            endGroup
+      - name: Revert permissions
+        if: ${{ always() }}
+        run: sudo chown -R 1001:116 .
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

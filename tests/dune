@@ -1,0 +1,9 @@
+; Not attached to a package, so built by `dune build` but never installed.
+(coq.theory
+  (name SMTLIB.tests)
+  (theories Stdlib stdpp Hammer Equations SMTLIB))
+
+(rule
+  (alias runtest)
+  (deps UnitTests.vo)
+  (action (progn)))

@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        rocq_version: ['9.0', '9.1', '9.2']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: rocq-community/docker-coq-action@v1
+        env:
+          OPAMWITHTEST: 'true'
+        with:
+          opam_file: rocq-smt-lib.opam
+          coq_version: ${{ matrix.rocq_version }}
+          ocaml_version: default
+          export: 'OPAMWITHTEST'
+          before_install: |
+            startGroup "Add the Rocq package archive"
+              opam repo add --all --set-default coq-released https://coq.inria.fr/opam/released || true
+            endGroup

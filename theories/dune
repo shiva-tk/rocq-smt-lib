@@ -1,0 +1,7 @@
+(include_subdirs qualified)
+
+(coq.theory
+  (name SMTLIB)
+  (package rocq-smt-lib)
+  (coqdoc_flags :standard --utf8 --lib-subtitles)
+  (theories Stdlib stdpp Hammer Equations))

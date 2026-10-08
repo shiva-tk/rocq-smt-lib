@@ -1,0 +1,2 @@
+-R _build/default/theories SMTLIB
+-R _build/default/tests SMTLIB.tests
